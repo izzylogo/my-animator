@@ -189,6 +189,27 @@ export class Compositor {
     ctx.restore();
   }
 
+  /** The finished picture for an export: no ghosts, no outlines view and no reference pictures. */
+  renderFinal(ctx: CanvasRenderingContext2D, frame: number, width: number, paper: boolean): void {
+    const p = this.project;
+    const scale = width / p.width;
+    const v: View = { m: [scale, 0, 0, scale, 0, 0], width, height: Math.round(p.height * scale) };
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.clearRect(0, 0, v.width, v.height);
+    ctx.setTransform(...v.m);
+    if (paper) {
+      ctx.fillStyle = p.background;
+      ctx.fillRect(0, 0, p.width, p.height);
+    }
+    this.plain = true;
+    for (const layer of p.layers) if (p.isShown(layer) && !layer.reference) this.drawLayer(ctx, layer, frame, v);
+    this.plain = false;
+    ctx.restore();
+  }
+
   /** Only the visible layers on clear paper at drawing size (used by the fill bucket). */
   renderLayers(ctx: CanvasRenderingContext2D, frame: number): void {
     const p = this.project;

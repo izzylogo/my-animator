@@ -21,6 +21,7 @@
       </nav>
       <span id="doc-name" class="doc-name"></span>
       <span class="spacer"></span>
+      <button id="open-export" class="primary export-btn" title="Save your animation as a video, GIF or pictures (Ctrl+E)">Export</button>
       <button id="undo" class="icon-btn ghost" data-icon="undo" title="Undo (Ctrl+Z)"></button>
       <button id="redo" class="icon-btn ghost" data-icon="redo" title="Redo (Ctrl+Y)"></button>
       <button id="help" class="icon-btn ghost" data-icon="help" title="Keyboard shortcuts (?)"></button>
@@ -109,7 +110,7 @@
           </label>
         </section>
         <section class="card">
-          <h3>Colour</h3>
+          <h3>Colour <button class="info" data-info="colour" aria-label="About colour" aria-expanded="false" type="button">i</button></h3>
           <div class="cp-top">
             <input id="color" type="color" value="#1b1b1f" title="Open your computer's colour picker" aria-label="Pick any colour" />
             <label class="cp-field">Hex <input id="cp-hex" type="text" maxlength="7" spellcheck="false" /></label>
@@ -123,7 +124,7 @@
           <div id="swatches" class="cp-grid"></div>
         </section>
         <section class="card">
-          <h3>Layer <span id="layer-kind" class="badge vector">Vector</span></h3>
+          <h3>Layer <span class="h-end"><span id="layer-kind" class="badge vector">Vector</span><button class="info" data-info="layer" aria-label="About layers" aria-expanded="false" type="button">i</button></span></h3>
           <div id="layer-name" class="layer-name">Layer 1</div>
           <label class="row">Blend
             <select id="layer-blend">
@@ -153,19 +154,19 @@
           </div>
         </section>
         <section class="card">
-          <h3><label title="See nearby drawings faintly (O)"><input id="onion" type="checkbox" checked /> Onion skin</label></h3>
+          <h3><label title="See nearby drawings faintly (O)"><input id="onion" type="checkbox" checked /> Onion skin</label><button class="info" data-info="onion" aria-label="About onion skin" aria-expanded="false" type="button">i</button></h3>
           <label class="row"><span><i class="chip before"></i> Before</span> <input id="onion-before" type="number" min="0" max="5" value="1" /></label>
           <label class="row"><span><i class="chip after"></i> After</span> <input id="onion-after" type="number" min="0" max="5" value="1" /></label>
           <label class="row">Strength <input id="onion-opacity" type="range" min="5" max="100" value="35" /></label>
           <div id="onion-pins" class="pin-list"></div>
         </section>
         <section class="card">
-          <h3>Reference</h3>
+          <h3>Reference <button class="info" data-info="reference" aria-label="About reference pictures" aria-expanded="false" type="button">i</button></h3>
           <button id="import-ref" class="wide" title="Bring in a picture to draw over">Import picture…</button>
           <input id="ref-file" type="file" accept="image/*" multiple hidden />
         </section>
         <section class="card">
-          <h3>Paper</h3>
+          <h3>Paper <button class="info" data-info="paper" aria-label="About the paper" aria-expanded="false" type="button">i</button></h3>
           <label class="row">Colour <input id="paper" type="color" value="#ffffff" /></label>
           <label class="check"><input id="touch" type="checkbox" /> Draw with your finger</label>
         </section>
@@ -237,9 +238,63 @@
         <span class="hint" data-for="text">Click and type. Ctrl+Enter or clicking away finishes the text.</span>
         <span class="hint" data-for="fill">Click inside an area to fill it. On a vector layer, click a line to recolour it.</span>
         <span class="spacer"></span>
-        <span class="legend"><i class="lg-key"></i>drawing <i class="lg-hold"></i>stays on screen <i class="lg-empty"></i>empty frame</span>
+        <span class="legend" title="How to read the timeline: a dot starts a drawing, a bar means it stays on screen, and a hollow square ends it"><i class="lg-key"></i>drawing <i class="lg-hold"></i>stays on screen <i class="lg-empty"></i>empty frame</span>
       </div>
     </footer>
+
+    <dialog id="export" class="export" aria-labelledby="export-title">
+      <div id="ex-setup">
+        <h3 id="export-title">Export animation</h3>
+        <div class="ex-body">
+          <div class="ex-left">
+            <div id="ex-stage" class="ex-stage"><canvas id="ex-preview" width="480" height="270" role="img" aria-label="Preview of your animation"></canvas></div>
+            <p id="ex-summary" class="ex-summary"></p>
+            <p class="ex-note">Hidden layers, onion skin and reference pictures are left out.</p>
+          </div>
+          <div class="ex-right">
+            <fieldset>
+              <legend>Format</legend>
+              <div id="ex-formats" class="ex-formats"></div>
+            </fieldset>
+            <fieldset>
+              <legend>Frames</legend>
+              <label class="ex-choice"><input id="ex-all" type="radio" name="ex-range" checked /> All frames</label>
+              <label class="ex-choice"><input id="ex-part" type="radio" name="ex-range" /> Only frames <input id="ex-from" type="number" min="1" aria-label="First frame" /> to <input id="ex-to" type="number" min="1" aria-label="Last frame" /></label>
+              <p id="ex-range-error" class="ask-error" role="status"></p>
+            </fieldset>
+            <fieldset>
+              <legend>Size</legend>
+              <select id="ex-size" aria-label="Picture size">
+                <option value="640">Small, 640 × 360</option>
+                <option value="1280" selected>Standard, 1280 × 720</option>
+                <option value="1920">Full HD, 1920 × 1080</option>
+              </select>
+              <label id="ex-paper-row" class="ex-choice"><input id="ex-paper" type="checkbox" checked /> Include the paper colour</label>
+            </fieldset>
+          </div>
+        </div>
+        <p id="ex-problem" class="ask-error" role="status"></p>
+        <div class="ask-buttons">
+          <button id="ex-close">Close</button>
+          <button id="ex-go" class="primary" autofocus>Export MP4</button>
+        </div>
+      </div>
+      <div id="ex-working" class="ex-state" hidden>
+        <h3>Exporting your animation…</h3>
+        <progress id="ex-bar" value="0" max="1" aria-label="Export progress"></progress>
+        <p id="ex-count" role="status"></p>
+        <div class="ask-buttons"><button id="ex-cancel">Cancel export</button></div>
+      </div>
+      <div id="ex-done" class="ex-state" hidden>
+        <h3>Your animation is ready</h3>
+        <p>Saved as <strong id="ex-done-name"></strong></p>
+        <div class="ask-buttons">
+          <button id="ex-show">Show in folder</button>
+          <button id="ex-open">Open it</button>
+          <button id="ex-finish" class="primary">Done</button>
+        </div>
+      </div>
+    </dialog>
 
     <dialog id="settings" class="settings" aria-labelledby="settings-title">
       <h3 id="settings-title">Settings</h3>
@@ -296,6 +351,7 @@
             <dt>Ctrl+Z / Y</dt><dd>Undo / Redo</dd>
             <dt>Ctrl+S</dt><dd>Save (Ctrl+Shift+S: Save as)</dd>
             <dt>Ctrl+O / N</dt><dd>Open / New project</dd>
+            <dt>Ctrl+E</dt><dd>Export</dd>
             <dt>Ctrl+0 / 1</dt><dd>Fit / 100%</dd>
             <dt>O</dt><dd>Onion skin</dd>
           </dl>

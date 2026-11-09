@@ -2,7 +2,7 @@
 
 Read this first in any new session. Design and phase plan: [DESIGN.md](DESIGN.md).
 
-## Status: Phase 1 + owner feedback rounds 1–12 built — waiting for the owner to test
+## Status: Phase 1 + owner feedback rounds 1–13 built — waiting for the owner to test
 
 Last updated: 2026-11-08
 
@@ -222,6 +222,16 @@ NOT verified: with the real pen (long press included), offline font fallback in 
 Tested in the real desktop app with real input and files, only the native file boxes answered by the test: save, second save, Save as, new, open, unsaved-work questions, damaged file, undo after open, autosave, closing. Fill: real drags in the app on frames 5 and 8. Settings: real clicks, remembered after reload, light base, reset gives the original values.
 NOT verified: real pen. In one long test run, restoring the autosave copy showed the view at 103% instead of 74%; two direct repeats of that step gave 74%, so the cause is unknown. If it shows up, Ctrl+0 fits the view.
 
+### Feedback round 13 (2026-11-09) ✅ built
+- Export (plan's Phase 4). Top-bar Export button, File > Export…, Ctrl+E. `src/ui/exportDialog.ts` is the window: live preview, format cards, all or some frames, three sizes, paper on or off, progress with Cancel, then Show in folder / Open it.
+- `src/export/exporter.ts` runs it. MP4: H.264 through WebCodecs, packed by our own `mp4.ts`. Transparent video: WebCodecs on this Electron refuses alpha, so `exporter.ts` encodes two VP9 streams (colour, and transparency as luma) and `webm.ts` stores them the way WebM defines alpha. GIF: our own `gif.ts`, per-frame palette, LZW, no dithering. PNG: one file per frame in a new folder, so nothing is overwritten; cancelling removes that folder.
+- `Compositor.renderFinal` draws an export frame: no onion skin, no outline view, no reference pictures, hidden layers left out. `electron/main.cjs` keeps the export location; the page only sends bytes.
+- Help (`src/ui/hints.ts`): every `title` becomes a styled tip, including rows built later, with the shortcut shown as a key. Tools get hover cards (`TOOL_HELP` in `main.ts`). Panels have an "i" button that opens an info popup and stays until you click away or press Esc (`INFO`). Uses the browser's popover layer so it also shows above dialogs.
+- Desktop shortcut "My Animator" runs the built app.
+
+Tested in the real desktop app with real input: every format exported and then opened and measured: MP4 at 720p and 1080p (size, 2.0 s, drawing moves), WebM really see-through with solid ink, GIF 48 frames and 2.0 s, PNGs numbered by frame and clear without paper. Also part ranges, a refused bad range, Cancel, Show and Open, hover card, tip, info popup, Esc.
+NOT verified: exported files in outside apps (YouTube, CapCut, Premiere, After Effects), real pen hover on the cards, very long animations.
+
 ### Next
 1. Owner tests feedback rounds 1–11 with the pen.
 2. Phase 2 — what's left: drag-move keyframes, clones.
@@ -237,5 +247,6 @@ NOT verified: real pen. In one long test run, restoring the autosave copy showed
   timers/imports there, not `requestAnimationFrame` waits.
 
 ## How to run
-- Double-click `Start Animator.bat`, or in a terminal in this folder: `npm run app`.
+- Double-click `Start Animator.bat` (rebuilds first), or in a terminal in this folder: `npm run app`.
+- The Desktop shortcut "My Animator" and the pinned taskbar shortcut (file name still `Electron.lnk`) start the built app directly with the logo, so run `npm run build` after changing the code.
 - Browser test mode: `npm run dev`, then open http://localhost:5173.

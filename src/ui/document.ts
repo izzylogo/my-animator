@@ -23,6 +23,12 @@ interface FileBridge {
   clearAutosave(): Promise<unknown>;
   setChanged(changed: boolean): Promise<unknown>;
   closeNow(): Promise<unknown>;
+  exportPick(kind: string, suggested: string): Promise<Saved | Problem | null>;
+  exportWrite(bytes: Uint8Array): Promise<Problem | undefined>;
+  exportFrame(name: string, bytes: Uint8Array): Promise<Problem | undefined>;
+  exportDiscard(): Promise<unknown>;
+  exportShow(): Promise<unknown>;
+  exportOpen(): Promise<unknown>;
   onCloseRequested(listener: () => void): void;
 }
 
@@ -68,6 +74,11 @@ export class ProjectDocument {
 
   private get title(): string {
     return this.name ?? 'Untitled';
+  }
+
+  /** The name to suggest for anything made from this project. */
+  get fileTitle(): string {
+    return this.title;
   }
 
   private show(): void {

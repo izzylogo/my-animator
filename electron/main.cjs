@@ -1,6 +1,6 @@
 // Electron "shell": opens one desktop window, loads the built app from ../dist, and does the
 // parts a web page isn't allowed to do itself: file boxes, and reading and writing files.
-const { app, BrowserWindow, Menu, dialog, ipcMain } = require('electron');
+const { app, BrowserWindow, Menu, dialog, ipcMain, shell } = require('electron');
 const fs = require('fs/promises');
 const path = require('path');
 
@@ -66,6 +66,62 @@ handle('file-forget', async () => {
   currentPath = null;
   await removeAutosave();
 });
+// ---- exports. The page only ever hands over bytes; the place on disk stays here.
+const EXPORT_TYPES = {
+  mp4: { name: 'MP4 video', extensions: ['mp4'] },
+  gif: { name: 'GIF animation', extensions: ['gif'] },
+  webm: { name: 'WebM video', extensions: ['webm'] },
+};
+let exportTarget = null; // { file } or { folder }
+
+/** A new folder beside nothing else, so an export never overwrites earlier pictures. */
+async function freshFolder(parent, base) {
+  for (let n = 1; n < 1000; n++) {
+    const folder = path.join(parent, n === 1 ? base : `${base} ${n}`);
+    try {
+      await fs.mkdir(folder);
+      return folder;
+    } catch (problem) {
+      if (problem.code !== 'EEXIST') throw problem;
+    }
+  }
+  throw new Error('Too many export folders with that name.');
+}
+
+handle('export-pick', async (kind, suggested) => {
+  const safeName = String(suggested).replace(/[<>:"/\\|?*]/g, '_');
+  const documents = app.getPath('documents');
+  if (kind === 'folder') {
+    const answer = await dialog.showOpenDialog(win, { title: 'Choose where to put the pictures', defaultPath: documents, properties: ['openDirectory', 'createDirectory'], buttonLabel: 'Export here' });
+    if (answer.canceled || !answer.filePaths[0]) return null;
+    const folder = await freshFolder(answer.filePaths[0], `${safeName} frames`);
+    exportTarget = { folder };
+    return { name: path.basename(folder) };
+  }
+  const type = EXPORT_TYPES[kind];
+  if (!type) throw new Error('Unknown export type.');
+  const answer = await dialog.showSaveDialog(win, { title: `Export ${type.name}`, defaultPath: path.join(documents, `${safeName}.${type.extensions[0]}`), filters: [type] });
+  if (answer.canceled || !answer.filePath) return null;
+  exportTarget = { file: answer.filePath };
+  return { name: path.basename(answer.filePath) };
+});
+handle('export-write', async (bytes) => {
+  await writeSafely(exportTarget.file, Buffer.from(bytes));
+});
+handle('export-frame', async (name, bytes) => {
+  await fs.writeFile(path.join(exportTarget.folder, path.basename(String(name))), Buffer.from(bytes));
+});
+handle('export-discard', async () => {
+  // Only ever a folder this export created a moment ago.
+  if (exportTarget?.folder) await fs.rm(exportTarget.folder, { recursive: true, force: true });
+  exportTarget = null;
+});
+handle('export-show', () => {
+  if (exportTarget?.file) shell.showItemInFolder(exportTarget.file);
+  else if (exportTarget?.folder) return shell.openPath(exportTarget.folder).then(() => undefined);
+});
+handle('export-open', () => (exportTarget ? shell.openPath(exportTarget.file ?? exportTarget.folder).then(() => undefined) : undefined));
+
 handle('autosave-write', (text) => writeSafely(autosavePath(), text));
 handle('autosave-read', async () => {
   try {

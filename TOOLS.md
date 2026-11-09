@@ -53,7 +53,8 @@ OpenToonz, Krita, TVPaint and Clip Studio Paint (ideas only; no code or assets c
 |---|---|
 | Add, delete, rename, reorder, duplicate, hide | ✅ |
 | Lock, opacity, blend modes | ✅ |
-| Layer folders, masks | 🔜 Phase 7 |
+| Layer folders | ✅ |
+| Masks | 🔜 Phase 7 |
 
 ## Timeline
 | Tool | Status |
@@ -72,8 +73,8 @@ OpenToonz, Krita, TVPaint and Clip Studio Paint (ideas only; no code or assets c
 ## Bigger phases
 | Feature | Status |
 |---|---|
-| Save, open, autosave | 🔜 Phase 2 (the most urgent) |
-| Export PNG sequence, GIF, MP4, transparent video | 🔜 Phase 4 |
+| Save, open, autosave | ✅ |
+| Export PNG sequence, GIF, MP4, transparent video | ✅ |
 | Keyframes: automatic in-betweens for move, resize, rotate and bend | ✅ |
 | Smooth or steady motion through keyframes | ✅ |
 | Custom easing curves, graph editor | 🔜 Phase 6 |

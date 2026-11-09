@@ -12,5 +12,11 @@ contextBridge.exposeInMainWorld('animatorFiles', {
   clearAutosave: () => ipcRenderer.invoke('autosave-clear'),
   setChanged: (changed) => ipcRenderer.invoke('set-changed', changed),
   closeNow: () => ipcRenderer.invoke('close-now'),
+  exportPick: (kind, suggested) => ipcRenderer.invoke('export-pick', kind, suggested),
+  exportWrite: (bytes) => ipcRenderer.invoke('export-write', bytes),
+  exportFrame: (name, bytes) => ipcRenderer.invoke('export-frame', name, bytes),
+  exportDiscard: () => ipcRenderer.invoke('export-discard'),
+  exportShow: () => ipcRenderer.invoke('export-show'),
+  exportOpen: () => ipcRenderer.invoke('export-open'),
   onCloseRequested: (listener) => ipcRenderer.on('close-requested', () => listener()),
 });

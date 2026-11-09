@@ -10,7 +10,7 @@
 
 My Animator is a personal 2D animation app for Windows, written from scratch with Electron, TypeScript and the HTML canvas. You draw on a 1280×720 paper, lay your drawings out on a timeline, and play them back straight away.
 
-It is a work in progress. It doesn't export video yet, so finished animations can only be played inside the app for now. See [What's planned](#whats-planned).
+It is a work in progress. See [What's planned](#whats-planned).
 
 ## Features
 
@@ -48,6 +48,14 @@ It is a work in progress. It doesn't export video yet, so finished animations ca
 - 50 steps of undo and redo
 - Zoom, pan, rotate and flip the view, with a grid and safe-area guides
 - Settings for the accent colour and base colour of the whole app
+- Hover cards on every tool, tips on every control, and info popups on each panel
+
+**Exporting**
+- MP4 video, up to Full HD
+- Looping GIF
+- PNG pictures, one per frame, with or without the paper
+- Transparent video (WebM)
+- A live preview, and the choice to export only part of your frames
 
 ## How to run it
 
@@ -115,13 +123,14 @@ Then open http://localhost:5173. This is meant for development. Drawing works, b
 | `Ctrl+Z` / `Ctrl+Y` | Undo / Redo |
 | `Ctrl+S` / `Ctrl+Shift+S` | Save / Save as |
 | `Ctrl+O` / `Ctrl+N` | Open / New project |
+| `Ctrl+E` | Export |
 | `?` | Show all shortcuts in the app |
 
 Tools with a small triangle in their corner hold more tools. Right-click them, or press and hold with a pen, to see the list.
 
 ## What's planned
 
-- Export to MP4, GIF, PNG sequence and transparent video
+- Stick-man key poses that AI draws as finished characters
 - Symbols, bones and a camera
 - Audio and lip-sync
 - More brushes and selection tools
@@ -134,6 +143,7 @@ Tools with a small triangle in their corner hold more tools. Right-click them, o
 |---|---|
 | `src/model` | The project, layers, keyframes, motion, undo and the file format |
 | `src/tools` | Brush, shapes, fill, selection and bending |
+| `src/export` | MP4, WebM and GIF file writers and the export steps |
 | `src/render` | Draws the picture for each frame |
 | `src/ui` | Timeline, colour panel, dialogs, settings and theme |
 | `src/playback` | Playing the animation |

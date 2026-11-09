@@ -12,6 +12,8 @@ import { ensureUids, outlineOf, sampleItems } from './model/motion';
 import { projectFromText, projectToText } from './model/projectFile';
 import { ProjectDocument } from './ui/document';
 import { setupSettings } from './ui/settings';
+import { setupExport } from './ui/exportDialog';
+import { hideHint, hoverCard, setupHints } from './ui/hints';
 import { RingCursor } from './ui/cursor';
 import { Viewport } from './ui/viewport';
 import { showMenu, type MenuItem } from './ui/contextMenu';
@@ -3249,8 +3251,6 @@ function swapColors(): void {
 
 const num = (id: string) => Number(input(id).value);
 
-const tip = Object.assign(document.createElement('div'), { id: 'tip', hidden: true });
-
 // One column of tools. A slot holding several tools opens a drop-down on right-click or a long press.
 const TOOL_SLOTS: (Tool[] | null)[] = [
   ['move', 'points', 'reshape'],
@@ -3285,7 +3285,7 @@ function drawSlot(s: Slot): void {
 }
 
 function slotMenu(s: Slot): void {
-  tip.hidden = true;
+  hideHint();
   const r = s.el.getBoundingClientRect();
   showMenu(r.right + 4, r.top, s.tools.map((t) => ({ label: TOOL_NAMES[t], shortcut: TOOL_KEYS[t], icon: toolIcon(t), current: t === tool, action: () => setTool(t) })));
 }
@@ -3500,6 +3500,8 @@ const menus: Record<string, () => MenuItem[]> = {
     'separator',
     { label: 'Save', shortcut: 'Ctrl+S', action: () => void document_.save() },
     { label: 'Save as…', shortcut: 'Ctrl+Shift+S', action: () => void document_.save(true) },
+    'separator',
+    { label: 'Export…', shortcut: 'Ctrl+E', action: () => exportWindow.open() },
   ],
   edit: () => [
     { label: 'Undo', shortcut: 'Ctrl+Z', action: undo },
@@ -3542,26 +3544,43 @@ document.querySelectorAll<HTMLElement>('[data-menu]').forEach((b) => {
     showMenu(r.left, r.bottom + 4, menus[b.dataset.menu!]());
   };
 });
-// Small labels that appear beside tools when you hover.
-document.body.appendChild(tip);
-document.querySelectorAll<HTMLElement>('.tool').forEach((b) => {
-  b.addEventListener('pointerenter', () => {
-    const r = b.getBoundingClientRect();
-    tip.textContent = b.getAttribute('aria-label');
-    tip.style.left = `${r.right + 8}px`;
-    tip.style.top = `${r.top + 4}px`;
-    tip.hidden = false;
+// A card beside each tool: what it does, its key, and what else is in that slot.
+const TOOL_HELP: Record<Tool, string> = {
+  move: 'Click a drawing to select it, or drag to move it. Use the handles to resize and rotate.',
+  points: 'Click a line to add a point, then drag the point to bend it.',
+  reshape: 'Drag a line or shape to bend it, like a magnet. Works on vector layers.',
+  select: 'Drag a box around a drawing, then use the handles to resize it.',
+  lasso: 'Draw a loop around what you want to select.',
+  brush: 'Draw on the paper. Press harder with a pen for a thicker line.',
+  eraser: 'Rub out parts of your drawing.',
+  pen: 'Click for corners and drag for curves. Click the first point to close the shape.',
+  text: 'Click and type. Press Ctrl+Enter or click away to finish.',
+  fill: 'Click inside an area to fill it with colour.',
+  picker: 'Click anything to take its colour. Alt+click does this with any tool.',
+  line: 'Drag to draw a straight line.',
+  rect: 'Drag to draw a rectangle. Hold Shift for a perfect square.',
+  ellipse: 'Drag to draw an ellipse. Hold Shift for a perfect circle.',
+  poly: 'Drag to draw a polygon or a star.',
+  hand: 'Drag to move around the paper.',
+  rotview: 'Drag to turn the view, like turning paper on a desk.',
+  zoom: 'Click to zoom in, Alt+click to zoom out.',
+};
+for (const s of slots) {
+  hoverCard(s.el, () => {
+    const others = s.tools.filter((t) => t !== s.current).map((t) => TOOL_NAMES[t]);
+    return { title: TOOL_NAMES[s.current], keys: TOOL_KEYS[s.current], body: TOOL_HELP[s.current], foot: others.length ? `Right-click for ${others.join(' and ')}` : undefined };
   });
-  b.addEventListener('pointerleave', () => (tip.hidden = true));
-});
+}
+setupHints();
 
 // ---------------------------------------------------------------- keyboard shortcuts
 window.addEventListener('keydown', (e) => {
-  if (settings.isOpen()) return;
-  if ((e.ctrlKey || e.metaKey) && ['s', 'o', 'n'].includes(e.key.toLowerCase())) {
+  if (settings.isOpen() || exportWindow.isOpen()) return;
+  if ((e.ctrlKey || e.metaKey) && ['s', 'o', 'n', 'e'].includes(e.key.toLowerCase())) {
     e.preventDefault();
     const key = e.key.toLowerCase();
-    if (key === 's') void document_.save(e.shiftKey);
+    if (key === 'e') exportWindow.open();
+    else if (key === 's') void document_.save(e.shiftKey);
     else if (key === 'o') void document_.open();
     else void document_.newProject();
     return;
@@ -3723,6 +3742,20 @@ const document_ = new ProjectDocument(
     label.title = name;
   },
 );
+
+const settleForExport = () => {
+  if (textBox) commitText();
+  if (pen) finishPen(false);
+  applyFloating();
+  player.stop();
+};
+const exportWindow = setupExport({
+  project,
+  fileTitle: () => document_.fileTitle,
+  settle: settleForExport,
+  draw: (ctx, f, width, paper) => compositor.renderFinal(ctx, f, width, paper),
+});
+$('open-export').onclick = () => exportWindow.open();
 
 // ---------------------------------------------------------------- start
 setTool('brush');
