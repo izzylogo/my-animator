@@ -1,0 +1,17 @@
+{
+  "name": "my-animator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A personal 2D frame-by-frame animation app.",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "app": "npm run build && electron ."
+  },
+  "devDependencies": {
+    "electron": "33.2.0",
+    "typescript": "5.6.3",
+    "vite": "5.4.10"
+  }
+}
